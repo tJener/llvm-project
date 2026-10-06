@@ -327,8 +327,6 @@ public:
     return addToken(*Range, Kind);
   }
 
-  // Most of this function works around
-  // https://github.com/clangd/clangd/issues/871.
   void addAngleBracketTokens(SourceLocation LLoc, SourceLocation RLoc) {
     if (!LLoc.isValid() || !RLoc.isValid())
       return;
@@ -344,27 +342,14 @@ public:
     RLoc = getHighlightableSpellingToken(RLoc, SourceMgr);
     if (!RLoc.isValid())
       return;
-
+    // Skip a `>` that comes from a macro body: RLoc is then the macro name.
     const auto *RTok = TB.spelledTokenContaining(RLoc);
-    // Handle `>>`. RLoc is either part of `>>` or a spelled token on its own
-    // `>`. If it's the former, slice to have length of 1, if latter use the
-    // token as-is.
-    if (!RTok || RTok->kind() == tok::greatergreater) {
-      Position Begin = sourceLocToPosition(SourceMgr, RLoc);
-      Position End = sourceLocToPosition(SourceMgr, RLoc.getLocWithOffset(1));
-      addToken(*LRange, HighlightingKind::Bracket);
-      addToken({Begin, End}, HighlightingKind::Bracket);
+    if (!RTok || RTok->kind() != tok::greater)
       return;
-    }
-
-    // Easy case, we have the `>` token directly available.
-    if (RTok->kind() == tok::greater) {
-      if (auto RRange = getRangeForSourceLocation(RLoc)) {
-        addToken(*LRange, HighlightingKind::Bracket);
-        addToken(*RRange, HighlightingKind::Bracket);
-      }
-      return;
-    }
+    addToken(*LRange, HighlightingKind::Bracket);
+    addToken(halfOpenToRange(SourceMgr,
+                             RTok->range(SourceMgr).toCharRange(SourceMgr)),
+             HighlightingKind::Bracket);
   }
 
   HighlightingToken &addToken(Range R, HighlightingKind Kind) {

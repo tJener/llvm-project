@@ -965,6 +965,18 @@ $Bracket[[>]]$Bracket[[>]] $LocalVariable_def[[s6]];
   $Bracket[[>]] $LocalVariable_def[[s7]];
       }
       )cpp",
+      // Brackets support: Nested template instantiations in a macro argument.
+      R"cpp(
+        #define $Macro_decl[[ID]](X) X
+        template$Bracket[[<]]typename $TemplateParameter_def[[T]]$Bracket[[>]] struct $Class_def[[S]] {};
+        $Macro[[ID]]($Class[[S]]$Bracket[[<]]$Class[[S]]$Bracket[[<]]int$Bracket[[>]]$Bracket[[>]] $Variable_def[[s1]];)
+      )cpp",
+      // Brackets support: The parser splits the '>>' twice.
+      R"cpp(
+        namespace $Namespace_decl[[n]] { template$Bracket[[<]]class $TemplateParameter_def[[T]]$Bracket[[>]] inline constexpr bool $Variable_def_readonly[[v]] = false; }
+        template$Bracket[[<]]class $TemplateParameter_def[[T]]$Bracket[[>]] struct $Class_def[[S]] {};
+        template$Bracket[[<]]$Bracket[[>]] inline constexpr bool $Namespace[[n]]::$Variable_def_readonly[[v]]$Bracket[[<]]$Class[[S]]$Bracket[[<]]int$Bracket[[>]]$Bracket[[>]] = true;
+      )cpp",
       // Brackets support: One of the brackets is a macro.
       R"cpp(
         #define $Macro_decl[[LESS]] <

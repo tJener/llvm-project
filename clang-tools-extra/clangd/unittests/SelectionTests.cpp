@@ -293,6 +293,20 @@ TEST(SelectionTest, CommonAncestor) {
           )cpp",
           "RecordTypeLoc",
       },
+      {
+          R"cpp(
+            template <typename T> struct S {};
+            S<[[S<int^>^]]> x;
+          )cpp",
+          "TemplateSpecializationTypeLoc",
+      },
+      {
+          R"cpp(
+            template <typename T> struct S {};
+            [[S<S<int>^>^]] x;
+          )cpp",
+          "TemplateSpecializationTypeLoc",
+      },
 
       // Point selections.
       {"void foo() { [[^foo]](); }", "DeclRefExpr"},
